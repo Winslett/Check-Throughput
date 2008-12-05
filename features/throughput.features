@@ -1,0 +1,41 @@
+Feature: Get the throughput for a router
+  In order to ensure the throughput works properly
+
+  Scenario: In Throughput
+     Given a router named bhm-rtr-wan with 3 interfaces
+     And probing the 1st interface
+     And previous in counter of 10
+     And occurred 5 seconds ago
+     And a new in counter of 20
+     Then should respond with an in throughput of 2
+
+  Scenario: Out Throughput
+     Given a router named bhm-rtr-wan with 2 interfaces
+     And probing the 2nd interface
+     And previous out counter of 15
+     And occurred 3 seconds ago
+     And a new out counter of 30
+     Then should respond with an out throughput of 5 
+
+  Scenario: Flush old with adding more than twentieth
+     Given a router named jfk-rtr-wan with 1 interface
+     And probing the 1st interface
+     And out counter contains 20 readings
+     And new out counter is added
+     Then should contain 20 out readings
+
+  Scenario: Add reading when contains less than 20
+     Given a router named fly-rtr-wan with 1 interface
+     And probing the 1st interface
+     And out counter contains 10 readings
+     And new out counter is added
+     Then should contain 11 out readings
+
+  Scenario: Get SNMP readings from the Router
+     Given a router named bhm-rtr-wan using interface 1 at 10.205.5.2 
+     And probing the 1st interface
+     And request counters
+     And wait 3 seconds
+     And request counters
+     Then should reply with valid out throughput on interface 1
+     Then should reply with valid in throughput on interface 1

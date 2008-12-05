@@ -1,0 +1,34 @@
+#!/usr/bin/ruby
+
+require 'socket'
+require 'lib/check_throughput'
+
+if ARGV.length == 0
+  puts "Usage: check_throughput [host] [community] [in|out] [interface #] [warning max:warning min] [critical max|critical min]"
+  exit 0
+else
+  @ranges = {}
+
+  if ARGV[4] # warning
+    ARGV[4] =~ /([0-9]+):?([0-9]+)?/ 
+    @ranges[:warning] = ($1.to_i..$2.to_i||999999)
+  end
+
+  if ARGV[5] # critical
+    ARGV[5] =~ /([0-9]+):?([0-9]+)?/ 
+    @ranges[:critical] = ($1.to_i..$2.to_i||999999)
+  end
+
+  @check_throughput = CheckThroughput.new(:host => ARGV[0], :interface => ARGV[3], :direction => ARGV[2], :ranges => @ranges)
+
+  if @check_throughput.critical?
+    puts "THROUGHPUT CRITICAL: #{sprintf('%1.2f', @check_throughput.throughput)} k/s"
+    exit 2
+  elsif @check_throughput.warning?
+    puts "THROUGHPUT WARNING: #{sprintf('%1.2f', @check_throughput.throughput)} k/s"
+    exit 1
+  else
+    puts "THROUGHPUT OK: #{sprintf('%1.2f', @check_throughput.throughput)} k/s"
+    exit 0
+  end
+end

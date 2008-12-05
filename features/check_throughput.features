@@ -1,0 +1,32 @@
+Feature: Get the throughput from the throughput process
+  In order to ensure we get the settings for Nagios 
+
+  Scenario: Nagios request throughput
+    Given the throughput process is running
+    And host is 10.205.5.2
+    And interface is the 1st
+    And traffic is going out
+    And a critical range of 10 and 300
+    And a Nagios request is made
+    Then should respond with a valid throughput
+    And should be critical
+
+  Scenario: Nagios request throughput
+    Given the throughput process is running
+    And host is 10.205.5.2
+    And interface is the 1st
+    And traffic is going in
+    And a warning range of 10 and 300
+    And a Nagios request is made
+    Then should respond with a valid throughput
+    And should have a warning
+
+  Scenario: Nagios request throughput
+    Given the throughput process is running
+    And host is 10.205.5.2
+    And interface is the 1st
+    And traffic is going in
+    And a critical range of 0 and 5000
+    And a Nagios request is made
+    Then should respond with a valid throughput
+    And should not have a warning
