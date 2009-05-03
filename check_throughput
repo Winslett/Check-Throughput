@@ -1,7 +1,32 @@
 #!/usr/bin/ruby
 
 require 'socket'
-require 'lib/check_throughput'
+require 'timeout'
+
+class CheckThroughput
+  attr_accessor :host, :interface, :direction, :throughput, :ranges
+
+  def initialize(args)
+    @host, @interface, @direction, @ranges = args[:host], args[:interface], args[:direction], args[:ranges]
+
+    Timeout::timeout(2) {
+      TCPSocket.open("127.0.0.1", "2000") { | client | client.puts "#{@host} #{@interface} #{@direction}"; @throughput = client.gets.to_f / 102.4 }
+    }
+  end
+
+  def critical?
+    "THROUGHPUT CRITICAL: last measured at #{@throughput}" if check_warning(:critical)
+  end
+
+  def warning?
+    "THROUGHPUT WARNING: last measured at #{@throughput}" if check_warning(:warning)
+  end
+
+  private
+  def check_warning(level)
+    !@ranges[level].nil? && (@ranges[level].begin > @throughput || @ranges[level].end < @throughput)
+  end
+end
 
 if ARGV.length == 0
   puts "Usage: check_throughput [host] [community] [in|out] [interface #] [warning max:warning min] [critical max|critical min]"
@@ -10,13 +35,13 @@ else
   @ranges = {}
 
   if ARGV[4] # warning
-    ARGV[4] =~ /([0-9]+):?([0-9]+)?/ 
-    @ranges[:warning] = ($1.to_i..$2.to_i||999999)
+    ARGV[4] =~ /([\-0-9]+):?([\-0-9]+)?/ 
+    @ranges[:warning] = ($2.to_i..$1.to_i||999999)
   end
 
   if ARGV[5] # critical
-    ARGV[5] =~ /([0-9]+):?([0-9]+)?/ 
-    @ranges[:critical] = ($1.to_i..$2.to_i||999999)
+    ARGV[5] =~ /([\-0-9]+):?([\-0-9]+)?/ 
+    @ranges[:critical] = ($2.to_i..$1.to_i||999999)
   end
 
   @check_throughput = CheckThroughput.new(:host => ARGV[0], :interface => ARGV[3], :direction => ARGV[2], :ranges => @ranges)
