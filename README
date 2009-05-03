@@ -1,0 +1,26 @@
+Start the daemon monitor by running ./throughput.rb
+ * You can change the port the daemon runs on by changing the "port" settings at the top of the file.  This file will run continuously.
+
+ Use the "check_throughput" file as the Nagios checker.  In the Nagios commands file, put the following:
+
+  define command {
+          command_name    check_throughput
+          command_line    /usr/lib/nagios/plugins/check_throughput $HOSTADDRESS$ $ARG5$ $ARG4$ $ARG1$ $ARG2$ $ARG3$
+          }
+
+  define service{
+          use                             standard
+          host_name                       my-rtr
+          service_description             IN THROUGHPUT
+          check_command                   check_throughput!10!2400:-1!2800:-1!in!public
+          notifications_enabled           0
+          }
+
+ Where the following arguments are the settings:
+
+HOSTADDRESS = ip address of the router / switch
+ARG1        = SNMP device number -- get this with snmpwalk 
+ARG2        = the "OKAY" range, outside this range will generate a warning
+ARG3        = the "warning" range, outside this range will be critical
+ARG4        = the direction of traffic (in|out) 
+ARG5        = SNMP community string (usually default to "public") 
